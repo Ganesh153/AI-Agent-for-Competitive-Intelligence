@@ -225,16 +225,6 @@ For issues or questions:
 
 This workflow is provided as-is for competitive intelligence research purposes.
 
-## ⚖️ Ethical Considerations
-
-This workflow is designed to gather and analyze only **publicly available information**. Ensure compliance with:
-- Data privacy regulations (GDPR, CCPA, etc.)
-- Terms of service of data sources
-- Ethical research guidelines
-- Company policies on competitive intelligence
-
-Always verify that your use of this workflow complies with applicable laws and regulations in your jurisdiction.
-
 ---
 
 **Last Updated**: February 2026
