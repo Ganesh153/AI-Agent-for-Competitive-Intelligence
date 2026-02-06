@@ -1,0 +1,1334 @@
+{
+  "name": "AI Agent for Competitive Intelligence",
+  "nodes": [
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.perplexity.ai/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "sonar"
+            },
+            {
+              "name": "messages[0].role",
+              "value": "user"
+            },
+            {
+              "name": "messages[0].content",
+              "value": "=<prompt> \n\nYou are tasked with analyzing a competitor using publicly available data. Your objective is to create a detailed competitive intelligence report that follows strict ethical guidelines and focuses on key business metrics. <target> Analyze the following competitor: {{ $json.Website_url }} </target> \n\n<focus_areas>\nResearch and document only these key aspects: \n{{ $('Input').item.json.interest_areas }}\n</focus_areas>\n\n<research_guidelines> For each focus area: *Utilize only public information from credible sources *Prioritize data from the past 12 months *Include specific metrics and timestamps *Note any information gaps clearly </research_guidelines> \n\n<data_sources> Acceptable sources include: Official company websites *Press releases News articles Industry reports *Social media profiles *Job boards *Financial filings </data_sources>\n\n<formatting_requirements> Structure your report with: *Clear section headers *Bullet points for key findings *Timestamps for all updates *Data visualizations where relevant </formatting_requirements> \n\n<compliance_notes> *Only use publicly accessible information *Avoid speculation or unverified claims *Document all information sources *Maintain ethical research standards </compliance_notes> \n\n</prompt>"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {
+              "maxRedirects": "=21"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7182da17-2ee5-43d9-b7db-70ff272d2e1d",
+      "name": "HTTP Request",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "5LWDWr1ThzQRGXZt",
+          "name": "Perplexity AI (G)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "=Find news from the last 7 days about: {{ $json['Competitor Name'] }}, {{ $json['Website_url'] }}"
+            },
+            {
+              "name": "search_depth",
+              "value": "advanced"
+            },
+            {
+              "name": "topic",
+              "value": "news"
+            },
+            {
+              "name": "max_results",
+              "value": "10"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        16,
+        240
+      ],
+      "id": "f3888bea-c72f-49c9-9787-6cf73a2fd76f",
+      "name": "HTTP Request1",
+      "retryOnFail": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "jt1g86r2i55aUA4Q",
+          "name": "Tavily Search"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        368,
+        144
+      ],
+      "id": "d97b02a8-f089-44cd-9d0c-7f184851b361",
+      "name": "Merge"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=<inputs>\n1. Research data about the target: {{ $json.general_info }}\n2. Recent news articles: {{ $json.news }}\n</inputs>",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are tasked with analysing two inputs and formatting them into a standardized intelligence report.\n\n<inputs>\n1. Research data about the target\n2. Recent news articles\n</inputs>\n\n<output>  \nFormat your analysis using these exact headers (only for the requested areas of interest): \n{{ $('Input').item.json.interest_areas }}\n\n</output> \n\n<rules>\n- Include dates for all developments\n- Note information gaps\n- Use bullet points for findings\n- Output headings should be in Bold.\n</rules>"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -160,
+        496
+      ],
+      "id": "1736bf6f-9553-45a0-bca4-f222eeaf79ca",
+      "name": "Basic LLM Chain"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f799bf3b-e06f-4792-b352-e89a72f8c9db",
+              "name": "Competitor Name",
+              "value": "={{ $('Append row in sheet').item.json['Competitor Name'] }}",
+              "type": "string"
+            },
+            {
+              "id": "321e5b3f-7c77-472f-b09d-b57ba80dd93f",
+              "name": "={{ $now.format('yyyy-MM-dd') }}",
+              "value": "={{ $json.text }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        240,
+        496
+      ],
+      "id": "dcc4aea7-5770-41bc-84b4-f0b3e636a412",
+      "name": "Edit Fields1"
+    },
+    {
+      "parameters": {
+        "sendTo": "ganeshsai2003.elr@gmail.com",
+        "subject": "Report",
+        "message": "={{ $json.data }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        832,
+        928
+      ],
+      "id": "39e94a70-8488-46f8-8c4b-733b22608f30",
+      "name": "Send a message",
+      "webhookId": "f4b1a4d3-2380-4046-9700-f59b0278c2ca",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "fnpuNeVNN6ZU4Dtd",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "86c84b53-b283-4db9-a785-372f4368777d",
+              "name": "general_info",
+              "value": "={{ $json.choices }}",
+              "type": "string"
+            },
+            {
+              "id": "0d925711-d0de-44e0-8c4c-b2defd8e9190",
+              "name": "news",
+              "value": "={{ $json.results }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        848,
+        144
+      ],
+      "id": "3b2a931f-1ac5-4825-b880-a3fbd69be9fa",
+      "name": "Set Fields"
+    },
+    {
+      "parameters": {
+        "fieldsToAggregate": {
+          "fieldToAggregate": [
+            {
+              "fieldToAggregate": "=2025-08-26"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.aggregate",
+      "typeVersion": 1,
+      "position": [
+        -144,
+        928
+      ],
+      "id": "53f7603b-dcfb-4683-8abd-f198873936b9",
+      "name": "Aggregate"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=Report:\n{{ JSON.stringify($json[\"2025-08-26\"], null, 2)}}\n\nRules:\nRetain every detail from the input above, including all symbols, punctuation marks, and emojis, without omitting or altering any part.\n\n\n\n\n",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=A JSON array named \"{{ $json['2025-08-22'] }} \" that contains reports of the company.\n\nTASK\n- Transform the above JSON array to a structured output that is readable with the Company name mentioned at the top.\n- Return the response without reducing the sentences.\n\n"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        160,
+        928
+      ],
+      "id": "c090e66f-463c-4ba3-9392-8062298390d9",
+      "name": "Basic LLM Chain1"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{ \n  \"email_markdown\": \"## Company Name \\n\\n **ExampleCo**\\n\\n {{$json.interest_areas.map(i => • ${i}).join('\\\\n')}}\" \n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        304,
+        1136
+      ],
+      "id": "aacde365-c6fd-475a-b47a-046d56f86804",
+      "name": "Structured Output Parser"
+    },
+    {
+      "parameters": {
+        "mode": "markdownToHtml",
+        "markdown": "={{ $json.output.email_markdown }}",
+        "options": {
+          "backslashEscapesHTMLTags": false,
+          "completeHTMLDocument": false,
+          "emoji": true,
+          "simpleLineBreaks": true,
+          "smartIndentationFix": true,
+          "tables": true
+        }
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        512,
+        928
+      ],
+      "id": "08da19f4-83a3-4326-a3ba-8e134880c46a",
+      "name": "Markdown"
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "documentId": {
+          "__rl": true,
+          "value": "1P2sGFrXinsr0fJNKBz94JS4P5Whcgdvq_XV4CWq4JTI",
+          "mode": "list",
+          "cachedResultName": "Competitor Research",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1P2sGFrXinsr0fJNKBz94JS4P5Whcgdvq_XV4CWq4JTI/edit?usp=drivesdk"
+        },
+        "title": "=Competiton Report",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -1152,
+        512
+      ],
+      "id": "475e7785-fd54-46cd-a51f-656ac05e0d44",
+      "name": "Create sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "cmi1Q2VZW3dszzAK",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.perplexity.ai/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "sonar"
+            },
+            {
+              "name": "messages[0].role",
+              "value": "user"
+            },
+            {
+              "name": "messages[0].content",
+              "value": "=<prompt> You are a market research assistant.  \nStep 1: Identify the primary domain/field of the company provided by the user.  \nStep 2: Find the top 3 competitors in that user-entered \"{{ $json[\"body\"][\"name\"] }}\" domain. \nStep 3: Return the result in exactly this JSON format (without extra explanation):  \n\n{\n  \"Domain\": \"Identified Domain/Field\",\n  \"Competitors\": [\n    {\"Competitor\": \"Company 1\", \"Website_url\": \"https://www.example1.com\"}\n    {\"Competitor\": \"Company 2\", \"Website_url\": \"https://www.example2.com\"},\n    {\"Competitor\": \"Company 3\", \"Website_url\": \"https://www.example3.com\"}\n  ]\n} \n\n</prompt>"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {
+              "maxRedirects": "=21"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1440,
+        512
+      ],
+      "id": "da292b95-9de2-4605-aff1-03934dfef70d",
+      "name": "Information",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "5LWDWr1ThzQRGXZt",
+          "name": "Perplexity AI (G)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// // Get the raw JSON from your Perplexity node\n// const data=$('Information').first().json.choices[0].message.content; \n\n// // Parse it if it's a string (Perplexity often returns JSON as a string)\n// let parsed;\n// try {\n//   parsed = JSON.parse(data);\n// } catch (e) {\n//   throw new Error(\"Content is not valid JSON: \" + data);\n// }\n\n// // Now reshape the Competitors array for Google Sheets\n// return parsed.Competitors.map(c => {\n//   return {\n//     json: {\n//       \"Competitor Name\": c.Competitor,\n//       \"Website_url\": c.Website_url\n//     }\n//   }\n// });\n\n// Get the raw JSON string from Information node\nlet raw =$('Information').first().json.choices[0].message.content;\n\n// Clean up string\nraw = raw.trim()\n         .replace(/\\\\n/g, \"\")   // remove literal \\n\n         .replace(/\\.\\.\\.$/, \"\"); // remove trailing ...\n\n// 🔑 Try to cut at the last closing brace \"}\"\nconst lastBrace = raw.lastIndexOf(\"}\");\nif (lastBrace !== -1) {\n  raw = raw.substring(0, lastBrace + 1); // keep only valid JSON\n}\n\nlet parsed;\ntry {\n  parsed = JSON.parse(raw);\n} catch (e) {\n  throw new Error(\"Could not parse JSON. Error: \" + e.message + \" | Cleaned Raw: \" + raw);\n}\n\n// Extract Competitors into desired format\nreturn parsed.Competitors.map(c => ({\n  json: {\n    \"Competitor Name\": c.Competitor,\n    \"Website_url\": c.Website_url\n  }\n}));"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -864,
+        512
+      ],
+      "id": "48d82ed4-090a-479a-9a3f-3bef86d6c948",
+      "name": "Code"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "1P2sGFrXinsr0fJNKBz94JS4P5Whcgdvq_XV4CWq4JTI",
+          "mode": "list",
+          "cachedResultName": "Competitor Research",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1P2sGFrXinsr0fJNKBz94JS4P5Whcgdvq_XV4CWq4JTI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Create sheet').item.json.title }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Competitor Name",
+              "displayName": "Competitor Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "Website_url",
+              "displayName": "Website_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "handlingExtraData": "insertInNewColumn"
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        -448,
+        128
+      ],
+      "id": "123218f2-95ba-4ff0-bd49-3a4ece1ec2e4",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "cmi1Q2VZW3dszzAK",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "update",
+        "documentId": {
+          "__rl": true,
+          "value": "1P2sGFrXinsr0fJNKBz94JS4P5Whcgdvq_XV4CWq4JTI",
+          "mode": "list",
+          "cachedResultName": "Competitor Research",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/1P2sGFrXinsr0fJNKBz94JS4P5Whcgdvq_XV4CWq4JTI/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "={{ $('Create sheet').item.json.title }}",
+          "mode": "name"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [
+            "Competitor Name"
+          ],
+          "schema": [
+            {
+              "id": "Competitor Name",
+              "displayName": "Competitor Name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "Website_url",
+              "displayName": "Website_url",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "2025-08-22",
+              "displayName": "2025-08-22",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true,
+              "removed": false
+            },
+            {
+              "id": "row_number",
+              "displayName": "row_number",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "number",
+              "canBeUsedToMatch": true,
+              "readOnly": true,
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {
+          "handlingExtraData": "insertInNewColumn"
+        }
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        592,
+        496
+      ],
+      "id": "884742c4-71d2-4947-ba91-8f562cab97d3",
+      "name": "Update row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "cmi1Q2VZW3dszzAK",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "hackathon-workflow",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1968,
+        512
+      ],
+      "id": "9c8b2571-4d9f-46da-8b59-38b10be809b4",
+      "name": "Webhook",
+      "webhookId": "f6651600-1ba7-43a4-b818-af05736cb69e"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "3c5b8935-7b16-40be-87b5-83366821d46d",
+              "name": "text",
+              "value": "={{$json[\"body\"][\"name\"]}}\n",
+              "type": "string"
+            },
+            {
+              "id": "1a4a0459-9adb-4655-80e6-acc1b9e87c18",
+              "name": "interest_areas",
+              "value": "={{ $node[\"Webhook\"].json[\"body\"][\"interest\"] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "includeOtherFields": true,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -1728,
+        512
+      ],
+      "id": "a0874e4d-c3f8-41bd-a48e-d577ae58d07c",
+      "name": "Input"
+    },
+    {
+      "parameters": {
+        "model": "command-r",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatCohere",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        688
+      ],
+      "id": "0f7f7f0b-091d-4338-a741-45403c09ca72",
+      "name": "Cohere Chat Model",
+      "credentials": {
+        "cohereApi": {
+          "id": "FOXl3KzMRkxunDyr",
+          "name": "Cohere Model"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "model": "command-r",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatCohere",
+      "typeVersion": 1,
+      "position": [
+        96,
+        1136
+      ],
+      "id": "d34e1d85-1e70-4ce8-9057-28d802e74e87",
+      "name": "Cohere Chat Model1",
+      "credentials": {
+        "cohereApi": {
+          "id": "FOXl3KzMRkxunDyr",
+          "name": "Cohere Model"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.perplexity.ai/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "sonar"
+            },
+            {
+              "name": "messages[0].role",
+              "value": "user"
+            },
+            {
+              "name": "messages[0].content",
+              "value": "=<prompt> \n\nYou are tasked with analyzing a company using publicly available data. Your objective is to create a detailed intelligence report that follows strict ethical guidelines and focuses on key business metrics. \n\n<target> \nAnalyze the following Company URL: \n{{ $('Information1').first().json.choices[0].message.content }}\n\n</target> \n\n<focus_areas>\nResearch and document only these key aspects: \n{{ $('Input').item.json.interest_areas }}\n</focus_areas>\n\n<research_guidelines> For each focus area: *Utilize only public information from credible sources *Prioritize data from the past 12 months *Include specific metrics and timestamps *Note any information gaps clearly </research_guidelines> \n\n<data_sources> Acceptable sources include: Official company websites *Press releases News articles Industry reports *Social media profiles *Job boards *Financial filings </data_sources>\n\n<formatting_requirements> Structure your report with: *Clear section headers *Bullet points for key findings *Timestamps for all updates *Data visualizations where relevant </formatting_requirements> \n\n<compliance_notes> *Only use publicly accessible information *Avoid speculation or unverified claims *Document all information sources *Maintain ethical research standards </compliance_notes> \n\n</prompt>"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {
+              "maxRedirects": "=21"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1488,
+        912
+      ],
+      "id": "e3458003-ef32-496f-b613-137a067f0344",
+      "name": "HTTP Request2",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "5LWDWr1ThzQRGXZt",
+          "name": "Perplexity AI (G)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.tavily.com/search",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "query",
+              "value": "=Find news from the last 7 days about:{{ $('Information1').first().json.choices[0].message.content }}"
+            },
+            {
+              "name": "search_depth",
+              "value": "advanced"
+            },
+            {
+              "name": "topic",
+              "value": "news"
+            },
+            {
+              "name": "max_results",
+              "value": "10"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1472,
+        1216
+      ],
+      "id": "6882cde3-aae3-4481-a887-ebd6734400cf",
+      "name": "HTTP Request3",
+      "retryOnFail": true,
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "jt1g86r2i55aUA4Q",
+          "name": "Tavily Search"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3.2,
+      "position": [
+        -1136,
+        1056
+      ],
+      "id": "f9da3812-860b-447b-92ec-517eaf04c094",
+      "name": "Merge1"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.perplexity.ai/chat/completions",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBearerAuth",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "accept",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "model",
+              "value": "sonar"
+            },
+            {
+              "name": "messages[0].role",
+              "value": "user"
+            },
+            {
+              "name": "messages[0].content",
+              "value": "=<prompt> \nProvide the website url of {{ $json[\"body\"][\"name\"] }}.\n\nRules:\nRespond with the company URL only. Do not include any additional information, context, or commentary.\n\n</prompt>"
+            }
+          ]
+        },
+        "options": {
+          "redirect": {
+            "redirect": {
+              "maxRedirects": "=21"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1776,
+        1056
+      ],
+      "id": "941aacad-f19c-4cbb-8494-75da3c6b56e8",
+      "name": "Information1",
+      "credentials": {
+        "httpBearerAuth": {
+          "id": "5LWDWr1ThzQRGXZt",
+          "name": "Perplexity AI (G)"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "86c84b53-b283-4db9-a785-372f4368777d",
+              "name": "general_info",
+              "value": "={{ $json.choices }}",
+              "type": "string"
+            },
+            {
+              "id": "0d925711-d0de-44e0-8c4c-b2defd8e9190",
+              "name": "news",
+              "value": "={{ $json.results }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        -912,
+        1376
+      ],
+      "id": "bb4a93c4-e416-4f18-a8b1-242a1ab86bf1",
+      "name": "Set Fields1"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=<inputs>\n1. Research data about: {{ $json.general_info }}\n2. Recent news articles: {{ $json.news }}\n</inputs>",
+        "messages": {
+          "messageValues": [
+            {
+              "message": "=You are tasked with analysing two inputs and formatting them into a standardized intelligence report.\n\n<inputs>\n1. Research data about the target.\n2. Recent news articles.\n</inputs>\n\n<output>  \nFormat your analysis using these exact headers (only for the requested areas of interest): \n{{ $('Input').item.json.interest_areas }}\n\n</output> \n\n<rules>\n- Include dates for all developments.\n- Use bullet points for findings.\n- Output headings should be in Bold.\n</rules>"
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -576,
+        1392
+      ],
+      "id": "1b0088bb-54d5-4b84-8e39-08ed13f7bbfc",
+      "name": "Basic LLM Chain2"
+    },
+    {
+      "parameters": {
+        "model": "command-r",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatCohere",
+      "typeVersion": 1,
+      "position": [
+        -624,
+        1568
+      ],
+      "id": "7580c2f8-af74-4ffe-8db4-a8dc07d525e9",
+      "name": "Cohere Chat Model2",
+      "credentials": {
+        "cohereApi": {
+          "id": "FOXl3KzMRkxunDyr",
+          "name": "Cohere Model"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "=<inputs>\n1. Analysis report about a Company: {{$json[\"text\"]}}\n2. Analysis report of its multiple competitiors: {{ JSON.stringify($json[\"2025-08-26\"], null, 2)}}\n</inputs>",
+        "hasOutputParser": true,
+        "messages": {
+          "messageValues": [
+            {
+              "type": "=SystemMessagePromptTemplate",
+              "message": "=Given the analysis report of its multiple competitors, generate insights specifically for the {{ $json[\"body\"][\"name\"] }}company.    \n\nCover :   \n1. Where competitors are ahead of us (gaps we must close).   \n2. Where we are ahead of them (strengths to defend).   \n3. Opportunities in the market we can capture based on their weaknesses.   \n4. Potential risks for our company if we do not act.   \n5. 3–5 actionable recommendations for our leadership team. "
+            }
+          ]
+        },
+        "batching": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chainLlm",
+      "typeVersion": 1.7,
+      "position": [
+        -64,
+        1376
+      ],
+      "id": "ed898d8b-a687-4894-807a-b8e794c516ce",
+      "name": "Comparison Report"
+    },
+    {
+      "parameters": {
+        "model": "command-r",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatCohere",
+      "typeVersion": 1,
+      "position": [
+        -64,
+        1568
+      ],
+      "id": "f517debd-ac6f-42de-9098-5fd9907a114f",
+      "name": "Cohere Chat Model3",
+      "credentials": {
+        "cohereApi": {
+          "id": "FOXl3KzMRkxunDyr",
+          "name": "Cohere Model"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "markdownToHtml",
+        "markdown": "={{ $json.output.email_markdown }}",
+        "options": {
+          "emoji": true,
+          "simpleLineBreaks": true,
+          "smartIndentationFix": true,
+          "tables": true
+        }
+      },
+      "type": "n8n-nodes-base.markdown",
+      "typeVersion": 1,
+      "position": [
+        288,
+        1376
+      ],
+      "id": "ac5f3af9-eea5-4da4-9dee-f4ec0a0deb6d",
+      "name": "Markdown1"
+    },
+    {
+      "parameters": {
+        "jsonSchemaExample": "{\n  \"email_markdown\": \"## Company Name \\n\\n **ExampleCo**\\n\\n {{$json.interest_areas.map(i => `• ${i}`).join('\\\\n')}}\"\n}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.outputParserStructured",
+      "typeVersion": 1.3,
+      "position": [
+        80,
+        1584
+      ],
+      "id": "f1d2e612-64e5-4cfd-8f6c-57ec12f7705d",
+      "name": "Structured Output Parser1"
+    },
+    {
+      "parameters": {
+        "sendTo": "ganeshsai2003.elr@gmail.com",
+        "subject": "Competitive Report",
+        "message": "={{ $json.data }} }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        576,
+        1376
+      ],
+      "id": "d5787136-4073-45b0-973a-dbd59c497db5",
+      "name": "Send a message1",
+      "webhookId": "dd4968bd-ffeb-4f88-aac2-2a94fa7c58f5",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "fnpuNeVNN6ZU4Dtd",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "HTTP Request": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request1": {
+      "main": [
+        [
+          {
+            "node": "Merge",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Merge": {
+      "main": [
+        [
+          {
+            "node": "Set Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields1": {
+      "main": [
+        [
+          {
+            "node": "Update row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Fields": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Aggregate": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Comparison Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain1": {
+      "main": [
+        [
+          {
+            "node": "Markdown",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Markdown": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Create sheet": {
+      "main": [
+        [
+          {
+            "node": "Code",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Information": {
+      "main": [
+        [
+          {
+            "node": "Create sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request1",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Update row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Aggregate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Input": {
+      "main": [
+        [
+          {
+            "node": "Information",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Information1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cohere Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cohere Chat Model1": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain1",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request2": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP Request3": {
+      "main": [
+        [
+          {
+            "node": "Merge1",
+            "type": "main",
+            "index": 1
+          }
+        ]
+      ]
+    },
+    "Information1": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request2",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "HTTP Request3",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge1": {
+      "main": [
+        [
+          {
+            "node": "Set Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set Fields1": {
+      "main": [
+        [
+          {
+            "node": "Basic LLM Chain2",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cohere Chat Model2": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Basic LLM Chain2",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Basic LLM Chain2": {
+      "main": [
+        [
+          {
+            "node": "Comparison Report",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Cohere Chat Model3": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Comparison Report",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Comparison Report": {
+      "main": [
+        [
+          {
+            "node": "Markdown1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Structured Output Parser1": {
+      "ai_outputParser": [
+        [
+          {
+            "node": "Comparison Report",
+            "type": "ai_outputParser",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Markdown1": {
+      "main": [
+        [
+          {
+            "node": "Send a message1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "2a9451fa-bdea-4624-ad78-ee20e37bf212",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "c53745da9d03290517e422a1bbd99a25430acb8c60fd7c8ace9dfb393d403ad6"
+  },
+  "id": "YMugihxC23Fxn2fL",
+  "tags": []
+}
